@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gowtham CareerPilot AI</title>
+    <script>
+      // Safeguard against external packages that unconditionally try to write to window.fetch / globalThis.fetch
+      // in proxy-wrapped or sandboxed iframe environments where window.fetch is read-only.
+      try {
+        const originalFetch = window.fetch;
+        Object.defineProperty(window, 'fetch', {
+          get() {
+            return originalFetch;
+          },
+          set(val) {
+            console.warn("Successfully intercepted and prevented read-only window.fetch assignment:", val);
+          },
+          configurable: true,
+          enumerable: true
+        });
+      } catch (err) {
+        console.warn("Failed to inject window.fetch assignment interceptor:", err);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
