@@ -1,0 +1,206 @@
+{
+  "users": [
+    {
+      "id": "demo-user-id",
+      "email": "demo@careerpilot.ai",
+      "passwordHash": "5d7c85b1403ed34dd6490842b2ec0ee27d87f4b1716d00d18854915df17137ef",
+      "name": "Alex Spencer",
+      "createdAt": "2026-05-16T10:37:51.174Z"
+    },
+    {
+      "id": "user-qnx5ktwcv",
+      "email": "alanmax430@gmail.com",
+      "passwordHash": "ba5c4d301de2e3ecebca278a3dfd9bdc7028f8dd8316894f775baacc3f7ef57f",
+      "name": "Gowtham",
+      "createdAt": "2026-06-15T10:39:03.648Z"
+    }
+  ],
+  "applications": [
+    {
+      "id": "app-1",
+      "userId": "demo-user-id",
+      "company": "Google",
+      "role": "Software Engineer",
+      "appliedDate": "2026-05-15",
+      "status": "Interview",
+      "salary": "$160,000",
+      "location": "Mountain View, CA (Hybrid)",
+      "jobDescription": "Build next-generation cloud infrastructure and generative AI models using Node.js, Go and React.",
+      "notes": "Passed the initial technical phone screen! Virtual on-site scheduled for next week. Focus on system design and dynamic programming.",
+      "createdAt": "2026-05-21T10:37:51.175Z"
+    },
+    {
+      "id": "app-2",
+      "userId": "demo-user-id",
+      "company": "Stripe",
+      "role": "Full Stack Engineer",
+      "appliedDate": "2026-05-10",
+      "status": "Applied",
+      "salary": "$150,000",
+      "location": "San Francisco, CA",
+      "jobDescription": "Help scale our billing engine developer dashboards utilizing React, TypeScript, and high-performance server architecture.",
+      "notes": "Applied via referral from former coworker. Recruiter said they are reviewing resumes this batch.",
+      "createdAt": "2026-05-18T10:37:51.175Z"
+    },
+    {
+      "id": "app-3",
+      "userId": "demo-user-id",
+      "company": "Netflix",
+      "role": "Senior UI Architect",
+      "appliedDate": "2026-06-01",
+      "status": "Offer",
+      "salary": "$210,000",
+      "location": "Los Gatos, CA",
+      "jobDescription": "Lead the UI foundation team. Maximize render performance, design system guidelines, and media-streaming player UX.",
+      "notes": "Received written offer! Base salary is incredible, with great benefits. Need to decide of other processes finish.",
+      "createdAt": "2026-06-03T10:37:51.175Z"
+    },
+    {
+      "id": "app-4",
+      "userId": "demo-user-id",
+      "company": "Meta",
+      "role": "Frontend Engineer",
+      "appliedDate": "2026-05-20",
+      "status": "Rejected",
+      "salary": "$175,000",
+      "location": "Menlo Park, CA (Hybrid)",
+      "jobDescription": "Design, develop and scale modern React products across Instagram Web portal and messaging dashboards.",
+      "notes": "Completed final loop, but received rejection letter on system design panel. Keep studying distributed services.",
+      "createdAt": "2026-05-26T10:37:51.175Z"
+    },
+    {
+      "id": "app-5",
+      "userId": "demo-user-id",
+      "company": "Vercel",
+      "role": "Developer Advocate",
+      "appliedDate": "2026-06-05",
+      "status": "Interview",
+      "salary": "$135,000",
+      "location": "Remote",
+      "jobDescription": "Help developers deploy, scale, and master Next.js, Edge compute, and AI integrations globally.",
+      "notes": "First screen with director of advocate relations went amazingly well. Recording a short Loom video demo'ing an Express-Next proxy next.",
+      "createdAt": "2026-06-07T10:37:51.175Z"
+    }
+  ],
+  "resumes": [
+    {
+      "id": "resume-1",
+      "userId": "demo-user-id",
+      "filename": "Alex_Spencer_FullStack_Resume.pdf",
+      "parseText": "Alex Spencer\nFull Stack Software Engineer\n\nExperience:\n- Software Engineer at RetailFlow (2024-Present): Lead UI rebuild in React 18, improving initial load time by 35%. Wrote backend APIs in Express and Node.\n- Associate Dev at CoreTech Systems (2022-2024): Designed REST APIs in Django, built responsive web applications.\n\nSkills: React, JavaScript, TypeScript, Node.js, Express, HTML, CSS, SQL, Git, Docker, Python.",
+      "fileSize": "142 KB",
+      "uploadedAt": "2026-05-31T10:37:51.175Z"
+    },
+    {
+      "filename": "Full Stack Developer.pdf",
+      "parseText": "Gowtham R.\n +91-6374133796 | gowthamdax@gmail.com | LinkedIn | GitHub\nDHAN Attendance App | DHAN Attendance and Leave Portal | Madurai, India\nProfessional Summary\nSoftware Developer with 2 years of experience building production-grade mobile and backend systems using React\njs,React Native, Node.js, and MySQL. Strong focus on system optimization and scalable architecture. Proven\nimpact in reducing operational cost, improving performance, and delivering large-scale field deployment systems.\nCurrently working at DHAN Foundation (ICT-INAYAM).\nWork Experience\nDHAN Foundation (ICT-INAYAM) Madurai, Tamil Nadu\nFull Stack Developer (2 years) Jun 2024 – Present\nKey Project: DHAN Attendance App (Google Play Store) and Dhan Attendance and Leave Portal\n– Built a React Native attendance system deployed across 16+ states, improving field reporting reliability at scale.\n– Replaced paid geolocation service (HereAPI) with Haversine Algorithm, achieving 100% cost reduction.\n– Designed a GPS-based hierarchical leave approval workflow ensuring data integrity and verification accuracy.\n– Implemented Docker-based deployments across LAN/WAN environments, improving deployment consistency.\n– Built secure SSH-based multi-developer workflow and automated deployment scripts.\n– Handled production debugging, REST API optimization, and scaling issues in live systems.\n– Built DigitalOcean Spaces cloud pipeline processing 5,000 images/day ( 1.8M/year) with optimized upload +\ncaching.\nTech Stack: React Native, Node.js, MySQL, Docker, DigitalOcean Spaces, Nginx, SSH, Git\nEducation\nB.E. Computer Science & Engineering 2020 – 2024\nSri Shakthi Institute of Engineering and Technology Coimbatore, Tamil Nadu\nTechnical Skills\nFrontend / Mobile: React Native, React.js\nBackend: Python,Node.js, Express.js, REST APIs\nDatabase: MySQL, MongoDB\nCloud / DevOps: Docker, DigitalOcean Spaces, Nginx, Git, SSH\nNotable Project\nDHAN Attendance App and Web Portal\nProduction mobile application used across 12+ Indian states. Handles GPS-based attendance and leave workflows\nwith location validation. Designed backend architecture, REST APIs, and data flow for scalable field operations.\nImplemented location distance calculation using the Haversine algorithm to replace external geolocation-based\ndependency, improving cost efficiency and system control. Implemented UUID-based device binding mechanism\nduring user registration to uniquely identify authorized devices, preventing multi-device misuse and ensuring secure\nattendance marking tied to a single registered device per employee.\nAdditional Information\nLanguages: Tamil, English, Hindi\nInterests: Scalable Systems, AI Agents, Cloud Architecture",
+      "fileSize": "3 KB",
+      "id": "resume-7936613b-65b3-42af-802a-0f3b66f10ca7",
+      "userId": "user-qnx5ktwcv",
+      "uploadedAt": "2026-06-15T10:50:14.978Z"
+    }
+  ],
+  "aiAnalysis": [
+    {
+      "id": "analysis-1",
+      "resumeId": "resume-1",
+      "userId": "demo-user-id",
+      "atsScore": 78,
+      "missingKeywords": [
+        "Next.js",
+        "Redis",
+        "CI/CD",
+        "AWS Cloud",
+        "GraphQL",
+        "Tailwind CSS"
+      ],
+      "suggestions": [
+        "Include metrics and bullet points showcasing quantified commercial outcomes (e.g., 'saved 40h/mo by automating standard pipelines')",
+        "Expand on cloud technologies (like Amazon AWS, ECS, or GCP) if targeting principal SaaS companies",
+        "Add Redis or Memcached under databases segment since many modern backend jobs require caching know-how",
+        "Explain test coverage techniques (e.g. Jest, Cypress) to prove production-readiness"
+      ],
+      "improvedBulletPoints": [
+        "Led high-traffic retail checkout redesign using React and TypeScript, boosting client-side routing efficiency and directly increasing conversion by 4.2%",
+        "Co-developed microservices server architecture in Express/Node.js to handle 10k+ concurrent requests, decreasing DB lookups by caching key endpoints"
+      ],
+      "analyzedAt": "2026-05-31T10:37:51.175Z"
+    },
+    {
+      "resumeId": "resume-7936613b-65b3-42af-802a-0f3b66f10ca7",
+      "atsScore": 80,
+      "missingKeywords": [
+        "Next.js",
+        "Redis Suite",
+        "CI/CD Orchestration",
+        "Cloud Native (AWS/GCP)",
+        "Docker Containers",
+        "GraphQL Queries"
+      ],
+      "suggestions": [
+        "Use strong action verbs like 'Engineered', 'Optimized', or 'Orchestrated' rather than generic introductory claims.",
+        "Highlight business impact by specifying concrete metrics, conversion scales, or loading speeds.",
+        "Refine your skills segment into structured groups (Frontend, Backend, Infrastructure)."
+      ],
+      "improvedBulletPoints": [
+        "BEFORE: Worked on our main retail project using React and improved performance.\nAFTER: Spearheaded React 18 core migration, applying virtualization to feed items resulting in 35% shorter initial paint lag.",
+        "BEFORE: Built Node and express backend controllers with database tables.\nAFTER: Architected low-latency Express API routers linked with Redis Cache caches, decreasing database lookups by 44% during high load spikes."
+      ],
+      "id": "analysis-89d9f9b4-f17c-406f-98af-9d22fe7d84b7",
+      "userId": "user-qnx5ktwcv",
+      "analyzedAt": "2026-06-15T10:50:18.326Z"
+    }
+  ],
+  "roadmaps": [
+    {
+      "id": "roadmap-1",
+      "userId": "demo-user-id",
+      "currentSkills": [
+        "React",
+        "TypeScript",
+        "Node.js",
+        "SQL"
+      ],
+      "targetRole": "Senior Generative AI Fullstack Developer",
+      "roadmapSteps": [
+        {
+          "title": "Generative AI Foundations & LLMs",
+          "description": "Master the basics of tokenization, embeddings, and API calls. Learn how to construct clean system prompts, handle rate limits, and select models depending on speed/quality constraints.",
+          "timeline": "Weeks 1-2",
+          "resources": [
+            "Google AI Studio - Gemini API Guide",
+            "DeepLearning.AI: Prompt Engineering for Developers"
+          ]
+        },
+        {
+          "title": "Vector Databases & Semantic Search",
+          "description": "Build semantic search triggers. Integrate Pinecone, Milvus or SQLite-VSS vectors database with your Node.js apps. Store Embeddings using standard models.",
+          "timeline": "Weeks 3-4",
+          "resources": [
+            "Pinecone Quickstart Hub",
+            "LangChain TS: Introduction to Vector Stores"
+          ]
+        },
+        {
+          "title": "RAG (Retrieval-Augmented Generation) Orchestration",
+          "description": "Develop server APIs that ingest resume PDFs/docs, slice texts into chunks, append vector overlaps, and query Gemini API to build Q&A assistants.",
+          "timeline": "Weeks 5-6",
+          "resources": [
+            "LlamaIndex TS Guides",
+            "Vercel AI SDK Templates"
+          ]
+        },
+        {
+          "title": "Real-time AI Streams & WebSockets",
+          "description": "Implement interactive streaming chat bubbles or bidirectional speech via Gemini Live API. Optimize client re-renders and use Server-Sent Events (SSE).",
+          "timeline": "Weeks 7-8",
+          "resources": [
+            "@google/genai SDK Documentation",
+            "WebSockets in Custom Node servers with Client AudioCtx"
+          ]
+        }
+      ],
+      "createdAt": "2026-06-05T10:37:51.175Z"
+    }
+  ]
+}
