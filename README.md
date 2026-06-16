@@ -123,7 +123,7 @@ MYSQL_DATABASE="careerpilot"
 ```
 
 ### 3. Database Selection & Migrations
-The application can run in two modes:
+The application can run in three modes:
 
 #### Mode A: JSON Database (Default, zero-config)
 No extra setup required. The application automatically creates and updates a local `db.json` file in the project root.
@@ -134,6 +134,12 @@ No extra setup required. The application automatically creates and updates a loc
    ```bash
    npm run migrate
    ```
+
+#### Mode C: Serverless Vercel Deployment (Auto-detected)
+When deployed on **Vercel**, the application automatically switches to serverless mode:
+* Filesystem writes are redirected to `/tmp/db.json` (Vercel's ephemeral writable folder) and seeded automatically from your template to prevent read-only `EROFS` crashes.
+* API requests are handled by serverless endpoints configured in [vercel.json](vercel.json).
+* For persistent database storage in production on Vercel, it is recommended to set `DATABASE_PROVIDER="mysql"` and hook up a remote cloud database (e.g., Aiven, PlanetScale, Supabase, etc.).
 
 ### 4. Start the Application
 Run the Vite and Express development environment in parallel:
