@@ -1,7 +1,8 @@
 import express from "express";
+import "dotenv/config";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { db } from "./server/db.js";
+import { repos } from "./server/repositories/RepositoryProvider.js";
 import {
   hashPassword,
   generateToken,
@@ -11,7 +12,13 @@ import {
 import {
   analyzeResumeWithAI,
   generateLearningRoadmapWithAI,
-  generateCareerInsightsWithAI
+  generateCareerInsightsWithAI,
+  fixBulletPointsWithAI,
+  matchResumeWithJD,
+  optimizeResumeWithAI,
+  generateResumeFromScratch,
+  extractTextFromPDF,
+  enhanceResumeWithAI
 } from "./server/gemini.js";
 
 async function startServer() {
@@ -25,20 +32,21 @@ async function startServer() {
   // --- API Authentication Routes ---
 
   // Register
-  app.post("/api/auth/register", (req, res) => {
+  app.post("/api/auth/register", async (req, res) => {
     try {
       const { email, password, name } = req.body;
       if (!email || !password || !name) {
         return res.status(400).json({ error: "Missing required fields (email, password, name)." });
       }
 
-      const existingUser = db.getUserByEmail(email);
+      const userRepo = repos.getUserRepository();
+      const existingUser = await userRepo.getUserByEmail(email);
       if (existingUser) {
         return res.status(400).json({ error: "Email already registered." });
       }
 
       const hash = hashPassword(password);
-      const newUser = db.createUser({
+      const newUser = await userRepo.createUser({
         id: "user-" + Math.random().toString(36).substring(2, 11),
         email: email.toLowerCase(),
         passwordHash: hash,
@@ -68,14 +76,15 @@ async function startServer() {
   });
 
   // Login
-  app.post("/api/auth/login", (req, res) => {
+  app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = req.body;
       if (!email || !password) {
         return res.status(400).json({ error: "Missing email or password." });
       }
 
-      const user = db.getUserByEmail(email);
+      const userRepo = repos.getUserRepository();
+      const user = await userRepo.getUserByEmail(email);
       if (!user) {
         return res.status(401).json({ error: "Invalid email or password." });
       }
@@ -107,10 +116,11 @@ async function startServer() {
   });
 
   // Get current user details
-  app.get("/api/auth/me", authenticateJWT, (req: AuthenticatedRequest, res) => {
+  app.get("/api/auth/me", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-      const user = db.getUserById(req.user.id);
+      const userRepo = repos.getUserRepository();
+      const user = await userRepo.getUserById(req.user.id);
       if (!user) return res.status(404).json({ error: "User not found" });
 
       res.json({
@@ -128,10 +138,11 @@ async function startServer() {
   // --- Job Application Tracker CRUD Routes ---
 
   // Get applications count or detailed filters
-  app.get("/api/applications", authenticateJWT, (req: AuthenticatedRequest, res) => {
+  app.get("/api/applications", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-      const apps = db.getApplications(req.user.id);
+      const jobRepo = repos.getJobRepository();
+      const apps = await jobRepo.getApplications(req.user.id);
       res.json(apps);
     } catch (err) {
       console.error("Error retrieving applications:", err);
@@ -140,7 +151,7 @@ async function startServer() {
   });
 
   // Add application
-  app.post("/api/applications", authenticateJWT, (req: AuthenticatedRequest, res) => {
+  app.post("/api/applications", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       const { company, role, appliedDate, status, salary, location, jobDescription, notes } = req.body;
@@ -149,7 +160,8 @@ async function startServer() {
         return res.status(400).json({ error: "Missing required tracking parameters." });
       }
 
-      const newApp = db.createApplication({
+      const jobRepo = repos.getJobRepository();
+      const newApp = await jobRepo.createApplication({
         company,
         role,
         appliedDate,
@@ -168,11 +180,12 @@ async function startServer() {
   });
 
   // Edit/Update application
-  app.put("/api/applications/:id", authenticateJWT, (req: AuthenticatedRequest, res) => {
+  app.put("/api/applications/:id", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       const { id } = req.params;
-      const updated = db.updateApplication(id, req.user.id, req.body);
+      const jobRepo = repos.getJobRepository();
+      const updated = await jobRepo.updateApplication(id, req.user.id, req.body);
       
       if (!updated) {
         return res.status(404).json({ error: "Job application not found." });
@@ -186,11 +199,12 @@ async function startServer() {
   });
 
   // Delete application
-  app.delete("/api/applications/:id", authenticateJWT, (req: AuthenticatedRequest, res) => {
+  app.delete("/api/applications/:id", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       const { id } = req.params;
-      const success = db.deleteApplication(id, req.user.id);
+      const jobRepo = repos.getJobRepository();
+      const success = await jobRepo.deleteApplication(id, req.user.id);
       
       if (!success) {
         return res.status(404).json({ error: "Application record not found." });
@@ -206,10 +220,11 @@ async function startServer() {
   // --- Resume management Routes ---
 
   // List user resumes
-  app.get("/api/resumes", authenticateJWT, (req: AuthenticatedRequest, res) => {
+  app.get("/api/resumes", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-      const resumes = db.getResumes(req.user.id);
+      const resumeRepo = repos.getResumeRepository();
+      const resumes = await resumeRepo.getResumes(req.user.id);
       res.json(resumes);
     } catch (err) {
       console.error("Error retrieving resumes:", err);
@@ -218,7 +233,7 @@ async function startServer() {
   });
 
   // Create/Upload custom resume
-  app.post("/api/resumes", authenticateJWT, (req: AuthenticatedRequest, res) => {
+  app.post("/api/resumes", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       const { filename, parseText, fileSize } = req.body;
@@ -227,7 +242,8 @@ async function startServer() {
         return res.status(400).json({ error: "Filename and clear text of resume are requested." });
       }
 
-      const newResume = db.createResume({
+      const resumeRepo = repos.getResumeRepository();
+      const newResume = await resumeRepo.createResume({
         filename,
         parseText,
         fileSize: fileSize || "Unknown size"
@@ -241,11 +257,12 @@ async function startServer() {
   });
 
   // Delete custom resume
-  app.delete("/api/resumes/:id", authenticateJWT, (req: AuthenticatedRequest, res) => {
+  app.delete("/api/resumes/:id", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       const { id } = req.params;
-      const success = db.deleteResume(id, req.user.id);
+      const resumeRepo = repos.getResumeRepository();
+      const success = await resumeRepo.deleteResume(id, req.user.id);
 
       if (!success) {
         return res.status(404).json({ error: "Resume draft files not found." });
@@ -258,6 +275,106 @@ async function startServer() {
     }
   });
 
+  // Parse PDF resume via Gemini
+  app.post("/api/resumes/parse-pdf", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const { filename, base64Data } = req.body;
+      if (!base64Data) {
+        return res.status(400).json({ error: "base64Data is required." });
+      }
+      const parseText = await extractTextFromPDF(base64Data);
+      res.json({ parseText });
+    } catch (err) {
+      console.error("Error parsing PDF resume:", err);
+      res.status(500).json({ error: "Failed to parse PDF resume." });
+    }
+  });
+
+  // Enhance resume text to 90%+ target
+  app.post("/api/resumes/enhance", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const { resumeText } = req.body;
+      if (!resumeText) {
+        return res.status(400).json({ error: "resumeText is required." });
+      }
+      const { enhancedText } = await enhanceResumeWithAI(resumeText);
+      res.json({ enhancedText });
+    } catch (err) {
+      console.error("Error enhancing resume:", err);
+      res.status(500).json({ error: "Failed to enhance resume." });
+    }
+  });
+
+  // Rewrite bullet points using STAR method
+  app.post("/api/resumes/fix-bullets", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const { bulletPoints } = req.body;
+      if (!bulletPoints || !Array.isArray(bulletPoints)) {
+        return res.status(400).json({ error: "bulletPoints string array is required." });
+      }
+
+      const rewritten = await fixBulletPointsWithAI(bulletPoints);
+      res.json({ bulletPoints: rewritten });
+    } catch (err) {
+      console.error("Error fixing bullet points:", err);
+      res.status(500).json({ error: "Failed to rewrite bullet points using AI." });
+    }
+  });
+
+  // Compare resume against JD
+  app.post("/api/resumes/match-jd", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const { resumeText, jobDescription } = req.body;
+      if (!resumeText || !jobDescription) {
+        return res.status(400).json({ error: "resumeText and jobDescription are required fields." });
+      }
+
+      const matchResult = await matchResumeWithJD(resumeText, jobDescription);
+      res.json(matchResult);
+    } catch (err) {
+      console.error("Error matching resume with JD:", err);
+      res.status(500).json({ error: "Failed to analyze job description match." });
+    }
+  });
+
+  // Optimize resume JSON structure for role
+  app.post("/api/resumes/optimize", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const { resumeData, targetRole } = req.body;
+      if (!resumeData || !targetRole) {
+        return res.status(400).json({ error: "resumeData and targetRole are required fields." });
+      }
+
+      const optimized = await optimizeResumeWithAI(resumeData, targetRole);
+      res.json(optimized);
+    } catch (err) {
+      console.error("Error optimizing resume JSON:", err);
+      res.status(500).json({ error: "Failed to optimize resume via AI." });
+    }
+  });
+
+  // Generate resume from scratch
+  app.post("/api/resumes/generate-scratch", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const { name, targetRole, skills, rawExperience } = req.body;
+      if (!name || !targetRole || !skills || !rawExperience) {
+        return res.status(400).json({ error: "Missing required parameters to generate resume." });
+      }
+
+      const generated = await generateResumeFromScratch(name, targetRole, skills, rawExperience);
+      res.json(generated);
+    } catch (err) {
+      console.error("Error generating resume from scratch:", err);
+      res.status(500).json({ error: "Failed to generate resume from scratch." });
+    }
+  });
+
   // --- AI Resume Analysis Routes ---
 
   // Perform Gemini AI Resume audit and analysis
@@ -266,7 +383,8 @@ async function startServer() {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       const { id } = req.params;
 
-      const resumeObj = db.getResume(id, req.user.id);
+      const resumeRepo = repos.getResumeRepository();
+      const resumeObj = await resumeRepo.getResume(id, req.user.id);
       if (!resumeObj) {
         return res.status(404).json({ error: "Target resume draft files not found." });
       }
@@ -275,7 +393,8 @@ async function startServer() {
       const aiResponse = await analyzeResumeWithAI(resumeObj.parseText);
 
       // Save analysis results for user tracking
-      const finalAnalysis = db.createAnalysis({
+      const aiAnalysisRepo = repos.getAIAnalysisRepository();
+      const finalAnalysis = await aiAnalysisRepo.createAnalysis({
         resumeId: id,
         atsScore: aiResponse.atsScore,
         missingKeywords: aiResponse.missingKeywords,
@@ -291,12 +410,13 @@ async function startServer() {
   });
 
   // Fetch analysis results
-  app.get("/api/resumes/:id/analysis", authenticateJWT, (req: AuthenticatedRequest, res) => {
+  app.get("/api/resumes/:id/analysis", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       const { id } = req.params;
 
-      const analysisObj = db.getAnalysisByResume(id, req.user.id);
+      const aiAnalysisRepo = repos.getAIAnalysisRepository();
+      const analysisObj = await aiAnalysisRepo.getAnalysisByResume(id, req.user.id);
       if (!analysisObj) {
         return res.status(404).json({ error: "No analysis reports have been calculated for this resume yet." });
       }
@@ -311,10 +431,11 @@ async function startServer() {
   // --- Career GPS Learning Roadmap Routes ---
 
   // Get users calculated roadmaps
-  app.get("/api/career/roadmaps", authenticateJWT, (req: AuthenticatedRequest, res) => {
+  app.get("/api/career/roadmaps", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-      const roadmaps = db.getRoadmaps(req.user.id);
+      const roadmapRepo = repos.getRoadmapRepository();
+      const roadmaps = await roadmapRepo.getRoadmaps(req.user.id);
       res.json(roadmaps);
     } catch (err) {
       console.error("Error serving maps list:", err);
@@ -334,7 +455,8 @@ async function startServer() {
 
       const generatedSteps = await generateLearningRoadmapWithAI(currentSkills, targetRole);
 
-      const savedRoadmap = db.createRoadmap({
+      const roadmapRepo = repos.getRoadmapRepository();
+      const savedRoadmap = await roadmapRepo.createRoadmap({
         currentSkills,
         targetRole,
         roadmapSteps: generatedSteps
@@ -349,10 +471,11 @@ async function startServer() {
 
   // --- Deep Analytics Dashboard Metrics ---
 
-  app.get("/api/analytics/dashboard", authenticateJWT, (req: AuthenticatedRequest, res) => {
+  app.get("/api/analytics/dashboard", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-      const apps = db.getApplications(req.user.id);
+      const jobRepo = repos.getJobRepository();
+      const apps = await jobRepo.getApplications(req.user.id);
       
       // Calculate applications per status count
       const statusCounts = {
@@ -445,8 +568,11 @@ async function startServer() {
   app.get("/api/analytics/insights", authenticateJWT, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-      const apps = db.getApplications(req.user.id);
-      const resumes = db.getResumes(req.user.id);
+      const jobRepo = repos.getJobRepository();
+      const apps = await jobRepo.getApplications(req.user.id);
+      
+      const resumeRepo = repos.getResumeRepository();
+      const resumes = await resumeRepo.getResumes(req.user.id);
       
       // Gather latest resume skills if any found
       let resumeSkills: string[] = ["React", "TypeScript", "Node.js", "Express", "REST APIs", "SQL", "Git"];
