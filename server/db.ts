@@ -2,7 +2,10 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
-const DB_FILE_PATH = path.join(process.cwd(), "db.json");
+const isVercel = process.env.VERCEL === "1";
+const DB_FILE_PATH = isVercel
+  ? path.join("/tmp", "db.json")
+  : path.join(process.cwd(), "db.json");
 
 export interface User {
   id: string;
@@ -84,6 +87,17 @@ class Database {
   private data: DBStructure = { ...DEFAULT_DB };
 
   constructor() {
+    if (isVercel) {
+      const sourcePath = path.join(process.cwd(), "db.json");
+      if (!fs.existsSync(DB_FILE_PATH) && fs.existsSync(sourcePath)) {
+        try {
+          fs.copyFileSync(sourcePath, DB_FILE_PATH);
+          console.log("Copied template db.json to /tmp for Vercel write access.");
+        } catch (err) {
+          console.error("Failed to copy db.json to /tmp", err);
+        }
+      }
+    }
     this.load();
     if (this.data.users.length === 0) {
       this.seedDemoData();

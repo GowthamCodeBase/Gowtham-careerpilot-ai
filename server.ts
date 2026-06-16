@@ -21,9 +21,8 @@ import {
   enhanceResumeWithAI
 } from "./server/gemini.js";
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
+const PORT = parseInt(process.env.PORT || "3000", 10);
 
   // JSON parsing with size limit for PDF or text base64 resume uploads
   app.use(express.json({ limit: "15mb" }));
@@ -605,30 +604,35 @@ async function startServer() {
 
   // --- Serve Frontend Application ---
 
-  // Dev server handles the serving itself using Vite's middleware, or Production falls back to statically built assets
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa"
+  if (process.env.VERCEL !== "1") {
+    const startLocalServer = async () => {
+      // Dev server handles the serving itself using Vite's middleware, or Production falls back to statically built assets
+      if (process.env.NODE_ENV !== "production") {
+        const vite = await createViteServer({
+          server: { middlewareMode: true },
+          appType: "spa"
+        });
+        app.use(vite.middlewares);
+        console.log("Vite development server middleware mounted.");
+      } else {
+        const distPath = path.join(process.cwd(), "dist");
+        app.use(express.static(distPath));
+        app.get("*", (req, res) => {
+          res.sendFile(path.join(distPath, "index.html"));
+        });
+        console.log("Static files serving mounted from dist/");
+      }
+
+      app.listen(PORT, "0.0.0.0", () => {
+        console.log(`Gowtham CareerPilot AI Server started at: http://localhost:${PORT}`);
+        console.log(`Port is active in background container`);
+      });
+    };
+
+    startLocalServer().catch(err => {
+      console.error("FATAL: Failed to launch Express Full-Stack server", err);
+      process.exit(1);
     });
-    app.use(vite.middlewares);
-    console.log("Vite development server middleware mounted.");
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-    console.log("Static files serving mounted from dist/");
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Gowtham CareerPilot AI Server started at: http://localhost:${PORT}`);
-    console.log(`Port is active in background container`);
-  });
-}
-
-startServer().catch(err => {
-  console.error("FATAL: Failed to launch Express Full-Stack server", err);
-  process.exit(1);
-});
+export default app;
