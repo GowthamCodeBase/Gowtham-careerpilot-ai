@@ -1,14 +1,126 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --font-sans: "Inter", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Quicksand", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Fira Code", ui-monospace, SFMono-Regular, monospace;
+
+  /* Indigo color overrides to collapse them to monochrome black/white/gray */
+  --color-indigo-50: var(--indigo-50);
+  --color-indigo-100: var(--indigo-100);
+  --color-indigo-200: var(--indigo-200);
+  --color-indigo-300: var(--indigo-300);
+  --color-indigo-400: var(--indigo-400);
+  --color-indigo-500: var(--indigo-500);
+  --color-indigo-600: var(--indigo-600);
+  --color-indigo-650: var(--indigo-600);
+  --color-indigo-700: var(--indigo-700);
+  --color-indigo-800: var(--indigo-800);
+  --color-indigo-900: var(--indigo-900);
+  --color-indigo-950: var(--indigo-950);
+
+  /* Slate color overrides to collapse them to monochrome black/white/gray */
+  --color-slate-50: var(--slate-50);
+  --color-slate-55: var(--slate-55);
+  --color-slate-100: var(--slate-100);
+  --color-slate-200: var(--slate-200);
+  --color-slate-250: var(--slate-250);
+  --color-slate-300: var(--slate-300);
+  --color-slate-350: var(--slate-350);
+  --color-slate-400: var(--slate-400);
+  --color-slate-500: var(--slate-500);
+  --color-slate-550: var(--slate-550);
+  --color-slate-600: var(--slate-600);
+  --color-slate-650: var(--slate-650);
+  --color-slate-700: var(--slate-700);
+  --color-slate-705: var(--slate-705);
+  --color-slate-800: var(--slate-800);
+  --color-slate-805: var(--slate-805);
+  --color-slate-900: var(--slate-900);
+  --color-slate-950: var(--slate-950);
+
+  /* Rose custom text override */
+  --color-rose-450: var(--rose-450);
+}
+
+:root {
+  --indigo-50: #f8f9fa;
+  --indigo-100: #e9ecef;
+  --indigo-200: #dee2e6;
+  --indigo-300: #ced4da;
+  --indigo-400: #adb5bd;
+  --indigo-500: #495057;
+  --indigo-600: #000000;
+  --indigo-700: #1a1a1a;
+  --indigo-800: #2d2d2d;
+  --indigo-900: #121212;
+  --indigo-950: #ffffff;
+
+  --slate-50: #ffffff;
+  --slate-55: #f9fafb;
+  --slate-100: #f5f5f5;
+  --slate-200: #e5e5e5;
+  --slate-250: #e5e5e5;
+  --slate-300: #d4d4d4;
+  --slate-350: #cccccc;
+  --slate-400: #a3a3a3;
+  --slate-500: #737373;
+  --slate-550: #666666;
+  --slate-600: #525252;
+  --slate-650: #404040;
+  --slate-700: #404040;
+  --slate-705: #404040;
+  --slate-800: #262626;
+  --slate-850: #1e1e1e;
+  --slate-805: #262626;
+  --slate-900: #171717;
+  --slate-950: #0a0a0a;
+
+  --rose-450: #e11d48;
+}
+
+html.dark {
+  --indigo-50: #121212;
+  --indigo-100: #1e1e1e;
+  --indigo-200: #2d2d2d;
+  --indigo-300: #3d3d3d;
+  --indigo-400: #4d4d4d;
+  --indigo-500: #adb5bd;
+  --indigo-600: #2d2d2d;
+  --indigo-700: #3d3d3d;
+  --indigo-800: #4d4d4d;
+  --indigo-900: #2d2d2d;
+  --indigo-950: #121212;
+
+  --slate-50: #0a0a0a;
+  --slate-55: #121212;
+  --slate-100: #171717;
+  --slate-200: #262626;
+  --slate-250: #262626;
+  --slate-300: #404040;
+  --slate-350: #404040;
+  --slate-400: #737373;
+  --slate-500: #a3a3a3;
+  --slate-550: #a3a3a3;
+  --slate-600: #d4d4d4;
+  --slate-650: #d4d4d4;
+  --slate-700: #e5e5e5;
+  --slate-705: #262626;
+  --slate-800: #e5e5e5;
+  --slate-850: #f5f5f5;
+  --slate-805: #1e1e1e;
+  --slate-900: #f5f5f5;
+  --slate-950: #ffffff;
+
+  --rose-450: #fb7185;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: #f8fafc; /* Sleek theme background bg-slate-50 */
+  background-color: var(--slate-50) !important;
+  color: var(--slate-950) !important;
 }
 
 /* Custom minimal scrollbar */
@@ -25,4 +137,23 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.4);
+}
+
+/* Auth page animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.75; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease both;
 }

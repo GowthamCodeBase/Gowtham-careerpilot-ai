@@ -1,12 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { api } from "./lib/api.ts";
-import { User, JobApplication, Resume, LearningRoadmap, DashboardStats } from "./types.ts";
+import { User, JobApplication, Resume, LearningRoadmap } from "./types.ts";
 import AuthForm from "./components/AuthForm.tsx";
-import AnalyticsDashboard from "./components/AnalyticsDashboard.tsx";
-import JobTracker from "./components/JobTracker.tsx";
-import ResumeWorkspace from "./components/ResumeWorkspace.tsx";
-import CareerGPS from "./components/CareerGPS.tsx";
-import AIInsightsView from "./components/AIInsightsView.tsx";
+
+// Lazy loading feature pages for optimized bundle size & page lifecycle
+const JobTracker = lazy(() => import("./components/JobTracker.tsx"));
+const ResumeWorkspace = lazy(() => import("./components/ResumeWorkspace.tsx"));
+const CareerGPS = lazy(() => import("./components/CareerGPS.tsx"));
+const AIInsightsView = lazy(() => import("./components/AIInsightsView.tsx"));
+const CareerCommandCenter = lazy(() => import("./components/CareerCommandCenter.tsx"));
+const ResumeIntelligence = lazy(() => import("./components/ResumeIntelligence.tsx"));
+const SkillGapView = lazy(() => import("./components/SkillGapView.tsx"));
+const JobMatchStudio = lazy(() => import("./components/JobMatchStudio.tsx"));
+
 import {
   LayoutDashboard,
   Briefcase,
@@ -22,12 +28,22 @@ import {
   Compass,
   Zap,
   User as UserIcon,
-  Loader2
+  Loader2,
+  Award
 } from "lucide-react";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [tab, setTab] = useState<"dashboard" | "tracker" | "resumes" | "gps" | "insights">("dashboard");
+  const [tab, setTab] = useState<
+    | "dashboard"
+    | "resume_intelligence"
+    | "skill_gap"
+    | "job_match"
+    | "tracker"
+    | "resumes"
+    | "gps"
+    | "insights"
+  >("dashboard");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -36,7 +52,6 @@ export default function App() {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [roadmaps, setRoadmaps] = useState<LearningRoadmap[]>([]);
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
 
   // Initialize and check JWT on startup
   useEffect(() => {
@@ -48,22 +63,9 @@ export default function App() {
       setDarkMode(false);
     }
 
-    const token = api.getToken();
-    if (token) {
-      api.getMe()
-        .then((userData) => {
-          setUser(userData);
-        })
-        .catch(() => {
-          api.logout();
-          setUser(null);
-        })
-        .finally(() => {
-          setIsInitializing(false);
-        });
-    } else {
-      setIsInitializing(false);
-    }
+    // Always show login screen on initial page load
+    api.logout();
+    setIsInitializing(false);
   }, []);
 
   // Fetch all states whenever authenticated user updates
@@ -83,9 +85,6 @@ export default function App() {
 
       const authRoadmaps = await api.getRoadmaps();
       setRoadmaps(authRoadmaps);
-
-      const stats = await api.getDashboardStats();
-      setDashboardStats(stats);
     } catch (err) {
       console.error("Failed to sync secure database logs:", err);
     }
@@ -103,7 +102,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to sign out from Gowtham CareerPilot AI?")) {
+    if (window.confirm("Are you sure you want to sign out from Gowtham Career Pilot AI?")) {
       api.logout();
       setUser(null);
     }
@@ -143,30 +142,21 @@ export default function App() {
   // --- Login Screen Fallback ---
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center py-12 px-4 transition-colors duration-300">
-        <div className="absolute top-4 right-4 z-50">
-          <button
-            onClick={() => setDarkMode(!isDarkMode)}
-            className="p-3 bg-white dark:bg-slate-900 shadow-md border border-slate-100 dark:border-slate-800 rounded-xl text-slate-600 dark:text-amber-400 cursor-pointer hover:bg-slate-100 transition"
-          >
-            {isDarkMode ? <Sun className="w-5 h-5 animate-pulse" /> : <Moon className="w-5 h-5" />}
-          </button>
-        </div>
+      <div style={{ minHeight: "100vh", width: "100%" }}>
         <AuthForm onSuccess={(authenticatedUser) => setUser(authenticatedUser)} />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 font-sans text-slate-850 dark:text-slate-100 overflow-hidden">
+    <div className="flex h-screen w-full bg-white dark:bg-black font-sans text-black dark:text-white overflow-hidden">
       
       {/* --- Sleek Theme Sidebar (Desktop) --- */}
-      <aside className="hidden md:flex w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col shrink-0">
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+      <aside className="hidden md:flex w-64 bg-white dark:bg-black border-r border-slate-200 dark:border-slate-800 flex-col shrink-0">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-extrabold text-sm shadow-md animate-pulse">C</div>
-            <span className="text-base font-black tracking-tight text-slate-800 dark:text-white">
-              Gowtham CareerPilot<span className="text-indigo-600 dark:text-indigo-400">AI</span>
+            <span className="text-base font-black tracking-tight text-black dark:text-white">
+              Gowtham Career Pilot AI
             </span>
           </div>
         </div>
@@ -174,7 +164,10 @@ export default function App() {
         {/* Navigation Sidebar Buttons Links */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {[
-            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { id: "dashboard", label: "Command Center", icon: LayoutDashboard },
+            { id: "resume_intelligence", label: "Resume Intelligence", icon: FileText },
+            { id: "skill_gap", label: "Skill Gap Analysis", icon: Award },
+            { id: "job_match", label: "Job Match Studio", icon: Sparkles },
             { id: "tracker", label: "Job Tracker", icon: Briefcase },
             { id: "resumes", label: "Resume Studio", icon: FileText },
             { id: "gps", label: "Career GPS", icon: Compass },
@@ -186,13 +179,13 @@ export default function App() {
               <button
                 key={menuItem.id}
                 onClick={() => setTab(menuItem.id as any)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition duration-200 text-xs font-semibold text-left cursor-pointer ${
+                className={`w-full flex items-center gap-2.5 px-4 py-2.5 rounded-md border transition duration-200 text-xs font-bold text-left cursor-pointer ${
                   isActive
-                    ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-xs"
-                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-white"
+                    ? "bg-black text-white dark:bg-white dark:text-black border-transparent shadow-xs"
+                    : "border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-black dark:hover:text-white"
                 }`}
               >
-                <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"}`} />
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white dark:text-black" : "text-slate-400"}`} />
                 <span>{menuItem.label}</span>
               </button>
             );
@@ -200,15 +193,15 @@ export default function App() {
         </nav>
 
         {/* Dynamic customized pro card */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800/50">
-          <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 dark:from-indigo-700 dark:to-indigo-800 rounded-2xl p-4 text-white shadow-md">
-            <p className="text-[10px] font-extrabold uppercase tracking-widest opacity-85 mb-1">Exclusive AI Pro</p>
-            <p className="text-xs font-medium mb-3 leading-relaxed">Predict callback probability metrics utilizing standard AI models.</p>
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-black rounded-lg p-4 text-black dark:text-white shadow-xs">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Career Copilot Pro</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">Predict callback probability metrics using Gemini intelligence.</p>
             <button
               onClick={() => setTab("insights")}
-              className="w-full py-1.5 bg-white text-indigo-650 hover:bg-slate-50 font-bold transition rounded-xl text-[10px] shadow-sm cursor-pointer"
+              className="w-full py-1.5 bg-black text-white dark:bg-white dark:text-black hover:bg-slate-900 dark:hover:bg-slate-100 font-bold transition rounded-md text-[10px] cursor-pointer"
             >
-              Analyze with insights
+              Evaluate Career Forecasts
             </button>
           </div>
         </div>
@@ -218,25 +211,24 @@ export default function App() {
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         
         {/* Mobile Header (Hidden on Desktops) */}
-        <header className="md:hidden h-16 bg-white dark:bg-slate-900 border-b border-slate-205 dark:border-slate-800 px-4 flex items-center justify-between shrink-0">
+        <header className="md:hidden h-16 bg-white dark:bg-black border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-650 rounded-lg flex items-center justify-center text-white font-extrabold text-xs shadow-md">C</div>
-            <span className="text-sm font-black tracking-tight text-slate-805 dark:text-white">
-              Gowtham CareerPilot<span className="text-indigo-600 dark:text-indigo-400">AI</span>
+            <span className="text-sm font-black tracking-tight text-black dark:text-white">
+              Gowtham Career Pilot AI
             </span>
           </div>
           
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setDarkMode(!isDarkMode)}
-              className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-805 text-slate-500 dark:text-amber-400 transition"
+              className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-amber-400 transition"
               title="Theme setting toggle"
             >
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 rounded-lg bg-slate-51 dark:bg-slate-805 text-slate-655 dark:text-white transition"
+              className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-white transition"
               title="Nav toggle menu button"
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -245,20 +237,27 @@ export default function App() {
         </header>
 
         {/* Desktop Custom Workspace Title Bar Header */}
-        <header className="hidden md:flex h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between shrink-0">
+        <header className="hidden md:flex h-20 bg-white dark:bg-black border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between shrink-0">
           <div>
-            <h1 className="text-xl md:text-2xl font-black text-slate-850 dark:text-white tracking-tight">
-              {tab === "dashboard" ? "Dashboard Overview" :
+            <h1 className="text-xl md:text-2xl font-black text-black dark:text-white tracking-tight">
+              {tab === "dashboard" ? "Career Command Center" :
+               tab === "resume_intelligence" ? "Resume Intelligence Report" :
+               tab === "skill_gap" ? "Skill Gap Engine" :
+               tab === "job_match" ? "Job Match Studio" :
                tab === "tracker" ? "Applications Tracker" :
-               tab === "resumes" ? "SaaS Resume Studio" :
-               tab === "gps" ? "Career Learning GPS" : "Career Copilot Dynamic Forecasting"}
+               tab === "resumes" ? "Resume Workspace" :
+               tab === "gps" ? "Career Learning GPS" : "Career Copilot Forecasting"}
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium font-sans">
               Welcome back, {user.name}. {
-                tab === "dashboard" ? `You have ${applications.filter(a => a.status === 'Interview').length} interviews scheduled.` : 
-                tab === "tracker" ? `Active tracking processes: ${applications.length} file entries.` :
-                tab === "resumes" ? `Review drafted resumes and perform parsing ATS audits.` :
-                tab === "gps" ? `Formulate high-performance learn curriculum paths.` : "Generate callback probability forecasts using Gemini prediction engines."
+                tab === "dashboard" ? `You have ${applications.filter(a => a.status === 'Interview').length} active interviews.` : 
+                tab === "resume_intelligence" ? "Detailed ATS scoring and keyword analysis report." :
+                tab === "skill_gap" ? "Compare inventory to target role competencies." :
+                tab === "job_match" ? "Interactive compatibility scoring for pasted JDs." :
+                tab === "tracker" ? `Active tracking processes: ${applications.length} applications.` :
+                tab === "resumes" ? "Manage and parse resume versions." :
+                tab === "gps" ? "Synthesize tailored learning paths with Career GPS." :
+                "Generate callback probability predictions using AI engines."
               }
             </p>
           </div>
@@ -268,7 +267,7 @@ export default function App() {
             <button
               id="desktop-theme-btn"
               onClick={() => setDarkMode(!isDarkMode)}
-              className="p-2.5 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/80 rounded-xl text-slate-500 dark:text-amber-400 transition cursor-pointer border border-slate-100 dark:border-slate-800"
+              className="p-2.5 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 dark:text-amber-400 transition cursor-pointer border border-slate-200 dark:border-slate-800"
               title="Toggle theme mode"
             >
               {isDarkMode ? <Sun className="w-4.5 h-4.5 animate-pulse" /> : <Moon className="w-4.5 h-4.5" />}
@@ -278,11 +277,11 @@ export default function App() {
 
             {/* Profile trigger */}
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-slate-600 dark:text-slate-350 border border-slate-200 dark:border-slate-700 uppercase p-1">
+              <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center font-black text-slate-600 dark:text-slate-350 border border-slate-200 dark:border-slate-800 uppercase p-1">
                 {user.name.substring(0, 2)}
               </div>
               <div className="text-left overflow-hidden max-w-[120px]">
-                <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{user.name}</p>
+                <p className="text-xs font-bold text-black dark:text-white truncate">{user.name}</p>
                 <button
                   id="desktop-logout-btn"
                   onClick={handleLogout}
@@ -297,10 +296,13 @@ export default function App() {
 
         {/* Mobile Nav Dropdown menu drawers */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 space-y-3 z-30 shrink-0">
+          <div className="md:hidden bg-white dark:bg-black border-b border-slate-200 dark:border-slate-800 p-4 space-y-3 z-30 shrink-0">
             <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
               {[
-                { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+                { id: "dashboard", label: "Command Center", icon: LayoutDashboard },
+                { id: "resume_intelligence", label: "Resume Intelligence", icon: FileText },
+                { id: "skill_gap", label: "Skill Gap Analysis", icon: Award },
+                { id: "job_match", label: "Job Match Studio", icon: Sparkles },
                 { id: "tracker", label: "Job Tracker", icon: Briefcase },
                 { id: "resumes", label: "Resume Studio", icon: FileText },
                 { id: "gps", label: "Career GPS", icon: Compass },
@@ -315,10 +317,10 @@ export default function App() {
                       setTab(menuItem.id as any);
                       setMobileMenuOpen(false);
                     }}
-                    className={`flex items-center gap-2 p-3 rounded-xl border transition cursor-pointer ${
+                    className={`flex items-center gap-2 p-3 rounded-md border transition cursor-pointer ${
                       isActive
-                        ? "bg-indigo-600 text-white border-transparent shadow-sm"
-                        : "text-slate-600 bg-slate-50 dark:text-slate-350 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800"
+                        ? "bg-black text-white dark:bg-white dark:text-black border-transparent shadow-xs"
+                        : "text-slate-500 bg-white dark:text-slate-400 dark:bg-black border-slate-200 dark:border-slate-800"
                     }`}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
@@ -328,12 +330,12 @@ export default function App() {
               })}
             </div>
 
-            <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-between text-xs font-bold">
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-3 flex items-center justify-between text-xs font-bold">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-xs text-indigo-500 uppercase">
+                <div className="w-7 h-7 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center font-black text-xs text-indigo-500 uppercase">
                   {user.name.substring(0, 2)}
                 </div>
-                <span className="text-slate-705 dark:text-slate-200">{user.name}</span>
+                <span className="text-black dark:text-white">{user.name}</span>
               </div>
               <button
                 onClick={() => {
@@ -349,65 +351,100 @@ export default function App() {
         )}
 
         {/* Viewport Dynamic Frame scrollable container */}
-        <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950/40 p-5 md:p-8">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-black p-5 md:p-8">
           <div id="central-view-container" className="max-w-7xl mx-auto w-full space-y-6">
-            
-            {tab === "dashboard" && dashboardStats && (
-              <div className="space-y-6 animate-fade-in">
-                <AnalyticsDashboard stats={dashboardStats} />
+            <Suspense fallback={
+              <div className="flex flex-col items-center justify-center py-32 space-y-3 animate-pulse">
+                <Loader2 className="w-8 h-8 text-black dark:text-white animate-spin" />
+                <p className="text-xs text-slate-400 font-medium">Synchronizing Page Environment...</p>
               </div>
-            )}
+            }>
+              {tab === "dashboard" && (
+                <div className="space-y-6 animate-fade-in">
+                  <CareerCommandCenter
+                    onNavigate={(target) => {
+                      if (target === "resumes") setTab("resumes");
+                      else if (target === "resume_intelligence") setTab("resume_intelligence");
+                      else if (target === "skill_gap") setTab("skill_gap");
+                      else if (target === "job_match") setTab("job_match");
+                      else if (target === "tracker") setTab("tracker");
+                      else if (target === "gps") setTab("gps");
+                      else if (target === "insights") setTab("insights");
+                    }}
+                    applications={applications}
+                  />
+                </div>
+              )}
 
-            {tab === "dashboard" && !dashboardStats && (
-              <div className="flex flex-col items-center justify-center py-32 space-y-3">
-                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-                <p className="text-xs text-slate-400 font-medium">Formulating Application Analytics...</p>
-              </div>
-            )}
+              {tab === "resume_intelligence" && (
+                <div className="space-y-6 animate-fade-in">
+                  <ResumeIntelligence
+                    resumes={resumes}
+                    onNavigateToResumes={() => setTab("resumes")}
+                  />
+                </div>
+              )}
 
-            {tab === "tracker" && (
-              <div className="space-y-6 animate-fade-in">
-                <JobTracker
-                  applications={applications}
-                  onCreate={handleCreateApplication}
-                  onUpdate={handleUpdateApplication}
-                  onDelete={handleDeleteApplication}
-                />
-              </div>
-            )}
+              {tab === "skill_gap" && (
+                <div className="space-y-6 animate-fade-in">
+                  <SkillGapView
+                    onNavigateToGPS={() => setTab("gps")}
+                  />
+                </div>
+              )}
 
-            {tab === "resumes" && (
-              <div className="space-y-6 animate-fade-in">
-                <ResumeWorkspace
-                  resumes={resumes}
-                  onUploadSuccess={refreshData}
-                />
-              </div>
-            )}
+              {tab === "job_match" && (
+                <div className="space-y-6 animate-fade-in">
+                  <JobMatchStudio
+                    resumes={resumes}
+                    onNavigateToResumes={() => setTab("resumes")}
+                  />
+                </div>
+              )}
 
-            {tab === "gps" && (
-              <div className="space-y-6 animate-fade-in">
-                <CareerGPS
-                  roadmaps={roadmaps}
-                  onGenerateSuccess={refreshData}
-                />
-              </div>
-            )}
+              {tab === "tracker" && (
+                <div className="space-y-6 animate-fade-in">
+                  <JobTracker
+                    applications={applications}
+                    onCreate={handleCreateApplication}
+                    onUpdate={handleUpdateApplication}
+                    onDelete={handleDeleteApplication}
+                  />
+                </div>
+              )}
 
-            {tab === "insights" && (
-              <div className="space-y-6 animate-fade-in">
-                <AIInsightsView />
-              </div>
-            )}
+              {tab === "resumes" && (
+                <div className="space-y-6 animate-fade-in">
+                  <ResumeWorkspace
+                    resumes={resumes}
+                    onUploadSuccess={refreshData}
+                  />
+                </div>
+              )}
 
+              {tab === "gps" && (
+                <div className="space-y-6 animate-fade-in">
+                  <CareerGPS
+                    roadmaps={roadmaps}
+                    onGenerateSuccess={refreshData}
+                  />
+                </div>
+              )}
+
+              {tab === "insights" && (
+                <div className="space-y-6 animate-fade-in">
+                  <AIInsightsView />
+                </div>
+              )}
+            </Suspense>
           </div>
         </div>
 
         {/* Footer info branding block */}
-        <footer className="py-4 px-6 text-center border-t border-slate-100 dark:border-slate-850/60 bg-white dark:bg-slate-900 text-slate-400 text-[11px] font-medium tracking-tight shrink-0 transition-colors">
+        <footer className="py-4 px-6 text-center border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-black text-slate-400 text-[11px] font-medium tracking-tight shrink-0 transition-colors">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
-            <p className="text-slate-400">© 2026 Google AI Studio Build. Licensed under Apache 2.0.</p>
-            <div className="flex gap-4 font-semibold text-slate-500">
+            <p className="text-slate-400 font-sans">© 2026 Google AI Studio Build. Licensed under Apache 2.0.</p>
+            <div className="flex gap-4 font-semibold text-slate-500 font-mono">
               <a href="https://ai.studio/build" target="_blank" rel="noreferrer" className="hover:underline">Studio Build</a>
               <span>•</span>
               <a href="https://github.com/google/genai" target="_blank" rel="noreferrer" className="hover:underline">@google/genai SDK</a>

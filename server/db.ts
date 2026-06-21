@@ -63,12 +63,117 @@ export interface LearningRoadmap {
   createdAt: string;
 }
 
+export interface CareerProfile {
+  id: string;
+  userId: string;
+  currentRole: string;
+  targetRole: string;
+  industry: string;
+  yearsExperience: number;
+  location: string;
+  skills: { name: string; level: string; years: number }[];
+  education: { degree: string; institution: string; year: number }[];
+  certifications: { name: string; issuer: string; date: string }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SkillAnalysis {
+  id: string;
+  profileId: string;
+  userId: string;
+  targetRole: string;
+  requiredSkills: { name: string; importance: string; typicalLevel: string }[];
+  existingSkills: { name: string; currentLevel: string; match: boolean }[];
+  missingSkills: { name: string; priority: "High" | "Medium" | "Low"; learningTimeline: string }[];
+  certifications: string[];
+  computedAt: string;
+}
+
+export interface CareerHealthScore {
+  id: string;
+  profileId: string;
+  userId: string;
+  overallScore: number;
+  resumeScore: number;
+  skillScore: number;
+  applicationScore: number;
+  interviewScore: number;
+  roadmapScore: number;
+  timestamp: string;
+}
+
+export interface ResumeIntelligence {
+  id: string;
+  resumeId: string;
+  userId: string;
+  atsScore: number;
+  keywordCoverage: number;
+  impactScore: number;
+  achievementDensity: number;
+  actionVerbDensity: number;
+  readabilityScore: number;
+  missingKeywords: string[];
+  suggestions: { section: string; original: string; improved: string; note: string }[];
+  computedAt: string;
+}
+
+export interface JobMatchReport {
+  id: string;
+  profileId: string;
+  userId: string;
+  jobId: string;
+  matchScore: number;
+  missingSkills: string[];
+  strongAreas: string[];
+  interviewProbability: number;
+  atsRankingEstimate: number;
+  computedAt: string;
+}
+
+export interface CareerInsight {
+  id: string;
+  profileId: string;
+  userId: string;
+  insightType: string;
+  content: string;
+  priority: number;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface ApplicationAnalytics {
+  id: string;
+  profileId: string;
+  userId: string;
+  period: "daily" | "weekly" | "monthly";
+  startDate: string;
+  totalApplied: number;
+  totalInterviews: number;
+  totalOffers: number;
+  totalRejected: number;
+  conversionRate: number;
+  interviewRate: number;
+  offerRate: number;
+  avgResponseTime: number;
+  topDomains: { domain: string; count: number; successRate: number }[];
+  topCompanies: { company: string; count: number; successRate: number }[];
+  successTrend: { date: string; applied: number; success: number }[];
+}
+
 interface DBStructure {
   users: User[];
   applications: JobApplication[];
   resumes: Resume[];
   aiAnalysis: AIAnalysis[];
   roadmaps: LearningRoadmap[];
+  careerProfiles: CareerProfile[];
+  skillAnalysis: SkillAnalysis[];
+  careerHealthScores: CareerHealthScore[];
+  resumeIntelligence: ResumeIntelligence[];
+  jobMatchReports: JobMatchReport[];
+  careerInsights: CareerInsight[];
+  applicationAnalytics: ApplicationAnalytics[];
 }
 
 const DEFAULT_DB: DBStructure = {
@@ -76,7 +181,14 @@ const DEFAULT_DB: DBStructure = {
   applications: [],
   resumes: [],
   aiAnalysis: [],
-  roadmaps: []
+  roadmaps: [],
+  careerProfiles: [],
+  skillAnalysis: [],
+  careerHealthScores: [],
+  resumeIntelligence: [],
+  jobMatchReports: [],
+  careerInsights: [],
+  applicationAnalytics: []
 };
 
 function hashString(str: string): string {
@@ -109,6 +221,13 @@ class Database {
       if (fs.existsSync(DB_FILE_PATH)) {
         const fileContent = fs.readFileSync(DB_FILE_PATH, "utf-8");
         this.data = JSON.parse(fileContent);
+        this.data.careerProfiles = this.data.careerProfiles || [];
+        this.data.skillAnalysis = this.data.skillAnalysis || [];
+        this.data.careerHealthScores = this.data.careerHealthScores || [];
+        this.data.resumeIntelligence = this.data.resumeIntelligence || [];
+        this.data.jobMatchReports = this.data.jobMatchReports || [];
+        this.data.careerInsights = this.data.careerInsights || [];
+        this.data.applicationAnalytics = this.data.applicationAnalytics || [];
       } else {
         this.data = { ...DEFAULT_DB };
         this.save();
@@ -128,7 +247,7 @@ class Database {
   }
 
   private seedDemoData() {
-    console.log("Seeding Gowtham CareerPilot AI Demo Data...");
+    console.log("Seeding Gowtham Career Pilot AI Demo Data...");
     const demoUserId = "demo-user-id";
     const demoUser: User = {
       id: demoUserId,
@@ -369,7 +488,6 @@ class Database {
   }
 
   createAnalysis(analysis: Omit<AIAnalysis, "id" | "analyzedAt" | "userId">, userId: string): AIAnalysis {
-    // Delete existing analysis for this resume if any
     this.data.aiAnalysis = this.data.aiAnalysis.filter(ans => !(ans.resumeId === analysis.resumeId && ans.userId === userId));
     
     const newAnalysis: AIAnalysis = {
@@ -398,6 +516,141 @@ class Database {
     this.data.roadmaps.push(newRoadmap);
     this.save();
     return newRoadmap;
+  }
+
+  // --- New Career OS Methods ---
+
+  // Career Profiles
+  getCareerProfile(userId: string): CareerProfile | undefined {
+    return this.data.careerProfiles.find(p => p.userId === userId);
+  }
+
+  upsertCareerProfile(profile: Omit<CareerProfile, "id" | "createdAt" | "updatedAt" | "userId">, userId: string): CareerProfile {
+    const existing = this.data.careerProfiles.find(p => p.userId === userId);
+    const now = new Date().toISOString();
+    if (existing) {
+      Object.assign(existing, profile, { updatedAt: now });
+      this.save();
+      return existing;
+    } else {
+      const newProfile: CareerProfile = {
+        ...profile,
+        id: "profile-" + crypto.randomUUID(),
+        userId,
+        createdAt: now,
+        updatedAt: now
+      };
+      this.data.careerProfiles.push(newProfile);
+      this.save();
+      return newProfile;
+    }
+  }
+
+  // Skill Analysis
+  getSkillAnalysis(userId: string): SkillAnalysis | undefined {
+    return this.data.skillAnalysis.find(a => a.userId === userId);
+  }
+
+  createSkillAnalysis(analysis: Omit<SkillAnalysis, "id" | "computedAt" | "userId">, userId: string): SkillAnalysis {
+    this.data.skillAnalysis = this.data.skillAnalysis.filter(a => a.userId !== userId);
+    const newAnalysis: SkillAnalysis = {
+      ...analysis,
+      id: "skill-analysis-" + crypto.randomUUID(),
+      userId,
+      computedAt: new Date().toISOString()
+    };
+    this.data.skillAnalysis.push(newAnalysis);
+    this.save();
+    return newAnalysis;
+  }
+
+  // Career Health Scores
+  getHealthScores(userId: string): CareerHealthScore[] {
+    return this.data.careerHealthScores.filter(s => s.userId === userId);
+  }
+
+  createHealthScore(score: Omit<CareerHealthScore, "id" | "timestamp" | "userId">, userId: string): CareerHealthScore {
+    const newScore: CareerHealthScore = {
+      ...score,
+      id: "score-" + crypto.randomUUID(),
+      userId,
+      timestamp: new Date().toISOString()
+    };
+    this.data.careerHealthScores.push(newScore);
+    this.save();
+    return newScore;
+  }
+
+  // Resume Intelligence
+  getResumeIntelligenceByResume(resumeId: string, userId: string): ResumeIntelligence | undefined {
+    return this.data.resumeIntelligence.find(intel => intel.resumeId === resumeId && intel.userId === userId);
+  }
+
+  createResumeIntelligence(intel: Omit<ResumeIntelligence, "id" | "computedAt" | "userId">, userId: string): ResumeIntelligence {
+    this.data.resumeIntelligence = this.data.resumeIntelligence.filter(i => !(i.resumeId === intel.resumeId && i.userId === userId));
+    const newIntel: ResumeIntelligence = {
+      ...intel,
+      id: "intel-" + crypto.randomUUID(),
+      userId,
+      computedAt: new Date().toISOString()
+    };
+    this.data.resumeIntelligence.push(newIntel);
+    this.save();
+    return newIntel;
+  }
+
+  // Job Match Reports
+  getJobMatchReport(jobId: string, userId: string): JobMatchReport | undefined {
+    return this.data.jobMatchReports.find(r => r.jobId === jobId && r.userId === userId);
+  }
+
+  createJobMatchReport(report: Omit<JobMatchReport, "id" | "computedAt" | "userId">, userId: string): JobMatchReport {
+    this.data.jobMatchReports = this.data.jobMatchReports.filter(r => !(r.jobId === report.jobId && r.userId === userId));
+    const newReport: JobMatchReport = {
+      ...report,
+      id: "match-" + crypto.randomUUID(),
+      userId,
+      computedAt: new Date().toISOString()
+    };
+    this.data.jobMatchReports.push(newReport);
+    this.save();
+    return newReport;
+  }
+
+  // Career Insights
+  getCareerInsights(userId: string): CareerInsight[] {
+    return this.data.careerInsights.filter(i => i.userId === userId);
+  }
+
+  createCareerInsight(insight: Omit<CareerInsight, "id" | "createdAt" | "userId">, userId: string): CareerInsight {
+    const newInsight: CareerInsight = {
+      ...insight,
+      id: "insight-" + crypto.randomUUID(),
+      userId,
+      createdAt: new Date().toISOString()
+    };
+    this.data.careerInsights.push(newInsight);
+    this.save();
+    return newInsight;
+  }
+
+  // Application Analytics
+  getApplicationAnalytics(userId: string, period: "daily" | "weekly" | "monthly"): ApplicationAnalytics[] {
+    return this.data.applicationAnalytics.filter(a => a.userId === userId && a.period === period);
+  }
+
+  createApplicationAnalytics(analytics: Omit<ApplicationAnalytics, "id" | "userId">, userId: string): ApplicationAnalytics {
+    this.data.applicationAnalytics = this.data.applicationAnalytics.filter(
+      a => !(a.userId === userId && a.period === analytics.period && a.startDate === analytics.startDate)
+    );
+    const newAnalytics: ApplicationAnalytics = {
+      ...analytics,
+      id: "analytics-" + crypto.randomUUID(),
+      userId
+    };
+    this.data.applicationAnalytics.push(newAnalytics);
+    this.save();
+    return newAnalytics;
   }
 }
 

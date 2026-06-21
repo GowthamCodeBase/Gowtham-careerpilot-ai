@@ -170,5 +170,63 @@ export const api = {
     const res = await fetch(`${API_BASE}/api/analytics/insights`, { headers: getHeaders() });
     if (!res.ok) throw new Error("Failed to analyze trends database via AI.");
     return res.json();
+  },
+
+  // API v2 Calls
+  async getCareerProfile() {
+    const res = await fetch(`${API_BASE}/api/v2/profiles`, { headers: getHeaders() });
+    if (!res.ok) throw new Error("Failed to load career profile.");
+    return res.json();
+  },
+
+  async updateCareerProfile(data: any) {
+    const res = await fetch(`${API_BASE}/api/v2/profiles`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to update career profile.");
+    return res.json();
+  },
+
+  async getCareerHealthScore() {
+    const res = await fetch(`${API_BASE}/api/v2/health-score`, { headers: getHeaders() });
+    if (!res.ok) throw new Error("Failed to fetch health score.");
+    return res.json();
+  },
+
+  async getResumeIntelligence(id: string) {
+    const res = await fetch(`${API_BASE}/api/v2/resume-intelligence/${id}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error("Failed to load resume intelligence report.");
+    return res.json();
+  },
+
+  async getSkillGap() {
+    const res = await fetch(`${API_BASE}/api/v2/skill-gap`, { headers: getHeaders() });
+    if (!res.ok) throw new Error("Failed to load skill gap analysis.");
+    return res.json();
+  },
+
+  async matchJob(jobId: string, jobDescription: string) {
+    const res = await fetch(`${API_BASE}/api/v2/job-match`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ jobId, jobDescription })
+    });
+    if (!res.ok) throw new Error("Failed to match job description.");
+    return res.json();
+  },
+
+  async getApplicationAnalytics() {
+    const res = await fetch(`${API_BASE}/api/v2/application-analytics`, { headers: getHeaders() });
+    if (!res.ok) throw new Error("Failed to load application analytics.");
+    return res.json();
+  },
+
+  async getForecast() {
+    const res = await fetch(`${API_BASE}/api/v2/forecast`, { headers: getHeaders() });
+    if (!res.ok) throw new Error("Failed to load predictive forecast.");
+    return res.json();
   }
 };
+

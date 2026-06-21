@@ -15,7 +15,7 @@ const dbName = process.env.MYSQL_DATABASE || "careerpilot";
 
 async function runMigration() {
   console.log("--------------------------------------------------");
-  console.log("🚀 Starting Gowtham CareerPilot AI MySQL Migration");
+  console.log("🚀 Starting Gowtham Career Pilot AI MySQL Migration");
   console.log(`📍 Connecting to MySQL at ${host}:${port} as ${user}`);
   console.log(`📂 DB File: ${DB_FILE_PATH}`);
   console.log("--------------------------------------------------");
@@ -109,6 +109,131 @@ async function runMigration() {
         targetRole VARCHAR(100) NOT NULL,
         roadmapSteps LONGTEXT NOT NULL,
         createdAt VARCHAR(50) NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS career_profiles (
+        id VARCHAR(50) PRIMARY KEY,
+        userId VARCHAR(50) NOT NULL,
+        currentRole VARCHAR(255) NOT NULL,
+        targetRole VARCHAR(255) NOT NULL,
+        industry VARCHAR(255) NOT NULL,
+        yearsExperience INT NOT NULL,
+        location VARCHAR(255) NOT NULL,
+        skills TEXT NOT NULL,
+        education TEXT NOT NULL,
+        certifications TEXT NOT NULL,
+        createdAt VARCHAR(50) NOT NULL,
+        updatedAt VARCHAR(50) NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS skill_analysis (
+        id VARCHAR(50) PRIMARY KEY,
+        profileId VARCHAR(50) NOT NULL,
+        userId VARCHAR(50) NOT NULL,
+        targetRole VARCHAR(255) NOT NULL,
+        requiredSkills TEXT NOT NULL,
+        existingSkills TEXT NOT NULL,
+        missingSkills TEXT NOT NULL,
+        certifications TEXT NOT NULL,
+        computedAt VARCHAR(50) NOT NULL,
+        FOREIGN KEY (profileId) REFERENCES career_profiles(id) ON DELETE CASCADE,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS career_health_scores (
+        id VARCHAR(50) PRIMARY KEY,
+        profileId VARCHAR(50) NOT NULL,
+        userId VARCHAR(50) NOT NULL,
+        overallScore DECIMAL(5,2) NOT NULL,
+        resumeScore DECIMAL(5,2) NOT NULL,
+        skillScore DECIMAL(5,2) NOT NULL,
+        applicationScore DECIMAL(5,2) NOT NULL,
+        interviewScore DECIMAL(5,2) NOT NULL,
+        roadmapScore DECIMAL(5,2) NOT NULL,
+        timestamp VARCHAR(50) NOT NULL,
+        FOREIGN KEY (profileId) REFERENCES career_profiles(id) ON DELETE CASCADE,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS resume_intelligence (
+        id VARCHAR(50) PRIMARY KEY,
+        resumeId VARCHAR(50) NOT NULL,
+        userId VARCHAR(50) NOT NULL,
+        atsScore DECIMAL(5,2) NOT NULL,
+        keywordCoverage DECIMAL(5,2) NOT NULL,
+        impactScore DECIMAL(5,2) NOT NULL,
+        achievementDensity DECIMAL(5,2) NOT NULL,
+        actionVerbDensity DECIMAL(5,2) NOT NULL,
+        readabilityScore DECIMAL(5,2) NOT NULL,
+        missingKeywords TEXT NOT NULL,
+        suggestions TEXT NOT NULL,
+        computedAt VARCHAR(50) NOT NULL,
+        FOREIGN KEY (resumeId) REFERENCES resumes(id) ON DELETE CASCADE,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS job_match_reports (
+        id VARCHAR(50) PRIMARY KEY,
+        profileId VARCHAR(50) NOT NULL,
+        userId VARCHAR(50) NOT NULL,
+        jobId VARCHAR(50) NOT NULL,
+        matchScore DECIMAL(5,2) NOT NULL,
+        missingSkills TEXT NOT NULL,
+        strongAreas TEXT NOT NULL,
+        interviewProbability DECIMAL(5,2) NOT NULL,
+        atsRankingEstimate DECIMAL(5,2) NOT NULL,
+        computedAt VARCHAR(50) NOT NULL,
+        FOREIGN KEY (profileId) REFERENCES career_profiles(id) ON DELETE CASCADE,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS career_insights (
+        id VARCHAR(50) PRIMARY KEY,
+        profileId VARCHAR(50) NOT NULL,
+        userId VARCHAR(50) NOT NULL,
+        insightType VARCHAR(100) NOT NULL,
+        content TEXT NOT NULL,
+        priority INT NOT NULL,
+        \`read\` BOOLEAN NOT NULL DEFAULT FALSE,
+        createdAt VARCHAR(50) NOT NULL,
+        FOREIGN KEY (profileId) REFERENCES career_profiles(id) ON DELETE CASCADE,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS application_analytics (
+        id VARCHAR(50) PRIMARY KEY,
+        profileId VARCHAR(50) NOT NULL,
+        userId VARCHAR(50) NOT NULL,
+        period VARCHAR(50) NOT NULL,
+        startDate VARCHAR(50) NOT NULL,
+        totalApplied INT NOT NULL,
+        totalInterviews INT NOT NULL,
+        totalOffers INT NOT NULL,
+        totalRejected INT NOT NULL,
+        conversionRate DECIMAL(5,2) NOT NULL,
+        interviewRate DECIMAL(5,2) NOT NULL,
+        offerRate DECIMAL(5,2) NOT NULL,
+        avgResponseTime DECIMAL(8,2) NOT NULL,
+        topDomains TEXT NOT NULL,
+        topCompanies TEXT NOT NULL,
+        successTrend TEXT NOT NULL,
+        FOREIGN KEY (profileId) REFERENCES career_profiles(id) ON DELETE CASCADE,
         FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
@@ -229,9 +354,205 @@ async function runMigration() {
     }
     console.log(`✓ Migrated ${roadmapsCount} learning roadmaps.`);
 
+    // 11. Migrate Career Profiles
+    let profilesCount = 0;
+    if (dbData.careerProfiles && Array.isArray(dbData.careerProfiles)) {
+      for (const cp of dbData.careerProfiles) {
+        const [rows] = await connection.query("SELECT id FROM career_profiles WHERE id = ?", [cp.id]);
+        if ((rows as any[]).length === 0) {
+          await connection.query(
+            "INSERT INTO career_profiles (id, userId, currentRole, targetRole, industry, yearsExperience, location, skills, education, certifications, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+              cp.id,
+              cp.userId,
+              cp.currentRole,
+              cp.targetRole,
+              cp.industry,
+              cp.yearsExperience,
+              cp.location,
+              JSON.stringify(cp.skills),
+              JSON.stringify(cp.education),
+              JSON.stringify(cp.certifications),
+              cp.createdAt,
+              cp.updatedAt
+            ]
+          );
+          profilesCount++;
+        }
+      }
+    }
+    console.log(`✓ Migrated ${profilesCount} career profiles.`);
+
+    // 12. Migrate Skill Analysis
+    let skillAnalysisCount = 0;
+    if (dbData.skillAnalysis && Array.isArray(dbData.skillAnalysis)) {
+      for (const sa of dbData.skillAnalysis) {
+        const [rows] = await connection.query("SELECT id FROM skill_analysis WHERE id = ?", [sa.id]);
+        if ((rows as any[]).length === 0) {
+          await connection.query(
+            "INSERT INTO skill_analysis (id, profileId, userId, targetRole, requiredSkills, existingSkills, missingSkills, certifications, computedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+              sa.id,
+              sa.profileId,
+              sa.userId,
+              sa.targetRole,
+              JSON.stringify(sa.requiredSkills),
+              JSON.stringify(sa.existingSkills),
+              JSON.stringify(sa.missingSkills),
+              JSON.stringify(sa.certifications),
+              sa.computedAt
+            ]
+          );
+          skillAnalysisCount++;
+        }
+      }
+    }
+    console.log(`✓ Migrated ${skillAnalysisCount} skill analysis reports.`);
+
+    // 13. Migrate Career Health Scores
+    let scoresCount = 0;
+    if (dbData.careerHealthScores && Array.isArray(dbData.careerHealthScores)) {
+      for (const hs of dbData.careerHealthScores) {
+        const [rows] = await connection.query("SELECT id FROM career_health_scores WHERE id = ?", [hs.id]);
+        if ((rows as any[]).length === 0) {
+          await connection.query(
+            "INSERT INTO career_health_scores (id, profileId, userId, overallScore, resumeScore, skillScore, applicationScore, interviewScore, roadmapScore, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+              hs.id,
+              hs.profileId,
+              hs.userId,
+              hs.overallScore,
+              hs.resumeScore,
+              hs.skillScore,
+              hs.applicationScore,
+              hs.interviewScore,
+              hs.roadmapScore,
+              hs.timestamp
+            ]
+          );
+          scoresCount++;
+        }
+      }
+    }
+    console.log(`✓ Migrated ${scoresCount} career health score records.`);
+
+    // 14. Migrate Resume Intelligence
+    let intelCount = 0;
+    if (dbData.resumeIntelligence && Array.isArray(dbData.resumeIntelligence)) {
+      for (const ri of dbData.resumeIntelligence) {
+        const [rows] = await connection.query("SELECT id FROM resume_intelligence WHERE id = ?", [ri.id]);
+        if ((rows as any[]).length === 0) {
+          await connection.query(
+            "INSERT INTO resume_intelligence (id, resumeId, userId, atsScore, keywordCoverage, impactScore, achievementDensity, actionVerbDensity, readabilityScore, missingKeywords, suggestions, computedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+              ri.id,
+              ri.resumeId,
+              ri.userId,
+              ri.atsScore,
+              ri.keywordCoverage,
+              ri.impactScore,
+              ri.achievementDensity,
+              ri.actionVerbDensity,
+              ri.readabilityScore,
+              JSON.stringify(ri.missingKeywords),
+              JSON.stringify(ri.suggestions),
+              ri.computedAt
+            ]
+          );
+          intelCount++;
+        }
+      }
+    }
+    console.log(`✓ Migrated ${intelCount} resume intelligence reports.`);
+
+    // 15. Migrate Job Match Reports
+    let matchesCount = 0;
+    if (dbData.jobMatchReports && Array.isArray(dbData.jobMatchReports)) {
+      for (const jm of dbData.jobMatchReports) {
+        const [rows] = await connection.query("SELECT id FROM job_match_reports WHERE id = ?", [jm.id]);
+        if ((rows as any[]).length === 0) {
+          await connection.query(
+            "INSERT INTO job_match_reports (id, profileId, userId, jobId, matchScore, missingSkills, strongAreas, interviewProbability, atsRankingEstimate, computedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+              jm.id,
+              jm.profileId,
+              jm.userId,
+              jm.jobId,
+              jm.matchScore,
+              JSON.stringify(jm.missingSkills),
+              JSON.stringify(jm.strongAreas),
+              jm.interviewProbability,
+              jm.atsRankingEstimate,
+              jm.computedAt
+            ]
+          );
+          matchesCount++;
+        }
+      }
+    }
+    console.log(`✓ Migrated ${matchesCount} job match reports.`);
+
+    // 16. Migrate Career Insights
+    let insightsCount = 0;
+    if (dbData.careerInsights && Array.isArray(dbData.careerInsights)) {
+      for (const ci of dbData.careerInsights) {
+        const [rows] = await connection.query("SELECT id FROM career_insights WHERE id = ?", [ci.id]);
+        if ((rows as any[]).length === 0) {
+          await connection.query(
+            "INSERT INTO career_insights (id, profileId, userId, insightType, content, priority, `read`, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+              ci.id,
+              ci.profileId,
+              ci.userId,
+              ci.insightType,
+              ci.content,
+              ci.priority,
+              ci.read ? 1 : 0,
+              ci.createdAt
+            ]
+          );
+          insightsCount++;
+        }
+      }
+    }
+    console.log(`✓ Migrated ${insightsCount} career insights.`);
+
+    // 17. Migrate Application Analytics
+    let analyticsCount = 0;
+    if (dbData.applicationAnalytics && Array.isArray(dbData.applicationAnalytics)) {
+      for (const aa of dbData.applicationAnalytics) {
+        const [rows] = await connection.query("SELECT id FROM application_analytics WHERE id = ?", [aa.id]);
+        if ((rows as any[]).length === 0) {
+          await connection.query(
+            "INSERT INTO application_analytics (id, profileId, userId, period, startDate, totalApplied, totalInterviews, totalOffers, totalRejected, conversionRate, interviewRate, offerRate, avgResponseTime, topDomains, topCompanies, successTrend) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+              aa.id,
+              aa.profileId,
+              aa.userId,
+              aa.period,
+              aa.startDate,
+              aa.totalApplied,
+              aa.totalInterviews,
+              aa.totalOffers,
+              aa.totalRejected,
+              aa.conversionRate,
+              aa.interviewRate,
+              aa.offerRate,
+              aa.avgResponseTime,
+              JSON.stringify(aa.topDomains),
+              JSON.stringify(aa.topCompanies),
+              JSON.stringify(aa.successTrend)
+            ]
+          );
+          analyticsCount++;
+        }
+      }
+    }
+    console.log(`✓ Migrated ${analyticsCount} application analytics reports.`);
+
     console.log("--------------------------------------------------");
     console.log("🎉 SUCCESS: MySQL migration has completed successfully!");
-    console.log(`📊 Total Imported Records: ${usersCount + resumesCount + appsCount + analysisCount + roadmapsCount}`);
+    console.log(`📊 Total Imported Records: ${usersCount + resumesCount + appsCount + analysisCount + roadmapsCount + profilesCount + skillAnalysisCount + scoresCount + intelCount + matchesCount + insightsCount + analyticsCount}`);
     console.log("--------------------------------------------------");
 
   } catch (error) {

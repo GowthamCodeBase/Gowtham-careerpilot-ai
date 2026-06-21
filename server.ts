@@ -3,6 +3,13 @@ import "dotenv/config";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { repos } from "./server/repositories/RepositoryProvider.js";
+import { db } from "./server/db.ts";
+import { careerScoreService } from "./server/services/CareerScoreService.ts";
+import { resumeAnalysisService } from "./server/services/ResumeAnalysisService.ts";
+import { skillGapService } from "./server/services/SkillGapService.ts";
+import { jobMatchService } from "./server/services/JobMatchService.ts";
+import { analyticsService } from "./server/services/AnalyticsService.ts";
+import { forecastService } from "./server/services/ForecastService.ts";
 import {
   hashPassword,
   generateToken,
@@ -602,6 +609,111 @@ const PORT = parseInt(process.env.PORT || "3000", 10);
     }
   });
 
+  // --- API v2 routes ---
+
+  app.get("/api/v2/profiles", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      let profile = db.getCareerProfile(req.user.id);
+      if (!profile) {
+        profile = db.upsertCareerProfile({
+          currentRole: "Software Engineer",
+          targetRole: "Senior Full Stack Architect",
+          industry: "Information Technology",
+          yearsExperience: 3,
+          location: "San Francisco, CA",
+          skills: [
+            { name: "React", level: "Advanced", years: 3 },
+            { name: "TypeScript", level: "Intermediate", years: 2 },
+            { name: "Node.js", level: "Intermediate", years: 2 },
+            { name: "SQL", level: "Intermediate", years: 2 }
+          ],
+          education: [
+            { degree: "B.S. in Computer Science", institution: "Tech State University", year: 2022 }
+          ],
+          certifications: []
+        }, req.user.id);
+      }
+      res.json(profile);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to retrieve profile." });
+    }
+  });
+
+  app.put("/api/v2/profiles", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const updated = db.upsertCareerProfile(req.body, req.user.id);
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to update profile." });
+    }
+  });
+
+  app.get("/api/v2/health-score", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const score = await careerScoreService.computeHealthScore(req.user.id);
+      res.json(score);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to calculate health score." });
+    }
+  });
+
+  app.get("/api/v2/resume-intelligence/:id", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const intel = await resumeAnalysisService.analyzeResume(req.params.id, req.user.id);
+      res.json(intel);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to analyze resume metrics." });
+    }
+  });
+
+  app.get("/api/v2/skill-gap", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const analysis = await skillGapService.analyzeSkillGap(req.user.id);
+      res.json(analysis);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to run skill gap analysis." });
+    }
+  });
+
+  app.post("/api/v2/job-match", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const { jobId, jobDescription } = req.body;
+      if (!jobId || !jobDescription) {
+        return res.status(400).json({ error: "jobId and jobDescription are required." });
+      }
+      const report = await jobMatchService.matchJob(req.user.id, jobId, jobDescription);
+      res.json(report);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to perform job match report." });
+    }
+  });
+
+  app.get("/api/v2/application-analytics", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const stats = await analyticsService.refreshAnalytics(req.user.id);
+      res.json(stats);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to compile application analytics." });
+    }
+  });
+
+  app.get("/api/v2/forecast", authenticateJWT, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      const data = await forecastService.forecast(req.user.id);
+      res.json(data);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to run predictive forecast." });
+    }
+  });
+
   // --- Serve Frontend Application ---
 
   if (process.env.VERCEL !== "1") {
@@ -624,7 +736,7 @@ const PORT = parseInt(process.env.PORT || "3000", 10);
       }
 
       app.listen(PORT, "0.0.0.0", () => {
-        console.log(`Gowtham CareerPilot AI Server started at: http://localhost:${PORT}`);
+        console.log(`Gowtham Career Pilot AI Server started at: http://localhost:${PORT}`);
         console.log(`Port is active in background container`);
       });
     };

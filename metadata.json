@@ -1,5 +1,5 @@
 {
-  "name": "Gowtham CareerPilot AI",
+  "name": "Gowtham Career Pilot AI",
   "description": "A comprehensive full-stack career platform to track job applications, analyze resumes, generate custom AI roadmaps, and gain powerful career insights.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
