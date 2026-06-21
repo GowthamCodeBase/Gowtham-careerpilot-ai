@@ -13,6 +13,13 @@
       "passwordHash": "ba5c4d301de2e3ecebca278a3dfd9bdc7028f8dd8316894f775baacc3f7ef57f",
       "name": "Gowtham",
       "createdAt": "2026-06-15T10:39:03.648Z"
+    },
+    {
+      "id": "user-dkza7l45h",
+      "email": "test@test.com",
+      "passwordHash": "968c9fa6f74a975ccec57989409cdcaa8dac48ec3cc89b391441fb338146bd42",
+      "name": "Test User",
+      "createdAt": "2026-06-16T12:13:39.161Z"
     }
   ],
   "applications": [

@@ -3,7 +3,7 @@
 A comprehensive, production-ready full-stack career platform designed to empower job seekers. Gowtham CareerPilot AI integrates advanced **Google Gemini AI** models to automate resume optimization, track job applications, build personalized skill roadmaps, and forecast career trajectory metrics.
 
 <div align="center">
-  <img src="assets/Gowtham CareerCopilotai.gif" alt="Gowtham CareerPilot AI Demo" width="100%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.15);" />
+  <img src="assets/Gowtham%20CareerCopilotai.gif" alt="Gowtham CareerPilot AI Demo" width="100%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.15);" />
 </div>
 
 <br />
